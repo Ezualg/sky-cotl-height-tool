@@ -20,6 +20,7 @@
                 </button>
                 <div id="lang-menu-header" class="lang-menu" style="display: none;">
                     <button type="button" class="lang-option" data-lang="en">English</button>
+                    <button type="button" class="lang-option" data-lang="zh-Hans">简体中文</button>
                     <button type="button" class="lang-option active" data-lang="zh-Hant">繁體中文</button>
                     <button type="button" class="lang-option" data-lang="ja">日本語</button>
                 </div>
@@ -80,6 +81,20 @@
                 <span class="label" data-lang-key="res_current">...</span>
                 <span class="value" id="res-current">...</span>
             </div>
+
+            <div id="height-progress" class="height-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" style="display: none;">
+                <div class="height-progress-header">
+                    <span class="height-progress-title" data-lang-key="height_progress_title">...</span>
+                    <span id="height-progress-percent" class="height-progress-percent">--</span>
+                </div>
+                <div class="height-progress-track">
+                    <div id="height-progress-fill" class="height-progress-fill" style="width: 0%;"></div>
+                </div>
+                <div class="height-progress-scale">
+                    <span id="height-progress-min" class="height-progress-endpoint">-</span>
+                    <span id="height-progress-max" class="height-progress-endpoint">-</span>
+                </div>
+            </div>
             <div class="result-item">
                 <span class="label" data-lang-key="res_tallest">...</span>
                 <span class="value" id="res-tallest">...</span>
@@ -89,13 +104,15 @@
                 <span class="value" id="res-shortest">...</span>
             </div>
 
-            <div class="result-item json-output">
-                <div class="json-header">
-                    <span class="label" data-lang-key="res_details">...</span>
+            <div id="history" class="history-container" style="display: none;">
+                <div class="history-header">
+                    <h2 data-lang-key="history_title">...</h2>
+                    <div class="history-header-actions">
+                        <button id="export-history-btn" data-lang-key="history_export_btn">...</button>
+                        <button id="clear-history-btn" data-lang-key="clear_history_btn">...</button>
+                    </div>
                 </div>
-                <div class="json-wrapper">
-                    <pre class="value json-pre" id="res-json" aria-live="polite" tabindex="0"></pre>
-                </div>
+                <ul id="history-list"></ul>
             </div>
 
             <div class="result-actions" id="result-actions" style="display: none;">
@@ -152,13 +169,12 @@
             </div>
         </div>
 
-        <div id="history" class="history-container" style="display: none;">
-            <div class="history-header">
-                <h2 data-lang-key="history_title">...</h2>
-                <button id="clear-history-btn" data-lang-key="clear_history_btn">...</button>
+        <details class="result-item json-output">
+            <summary data-lang-key="res_details">...</summary>
+            <div class="json-wrapper">
+                <pre class="value json-pre" id="res-json" aria-live="polite" tabindex="0"></pre>
             </div>
-            <ul id="history-list"></ul>
-        </div>
+        </details>
     </div>
 
     <div class="container simulator-container" id="simulator-container" style="display: none;">
@@ -195,8 +211,11 @@
             <span class="footer-separator">|</span>
             <a href="https://discord.gg/WfevubxfR7" target="_blank" rel="noopener noreferrer" data-lang-key="report_issue_link">...</a>
             <span class="footer-separator">|</span>
+            <a href="https://ezualg.cc.cd" target="_blank" rel="noopener noreferrer" data-lang-key="homepage_link">...</a>
+            <span class="footer-separator">|</span>
             <div id="lang-switcher" class="footer-lang-switcher">
                 <button type="button" class="lang-option" data-lang="en">English</button>
+                <button type="button" class="lang-option" data-lang="zh-Hans">简体中文</button>
                 <button type="button" class="lang-option active" data-lang="zh-Hant">繁體中文</button>
                 <button type="button" class="lang-option" data-lang="ja">日本語</button>
             </div>

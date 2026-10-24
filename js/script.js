@@ -94,6 +94,11 @@ document.addEventListener('DOMContentLoaded', () => {
         resTallest: document.getElementById('res-tallest'),
         resShortest: document.getElementById('res-shortest'),
         resJson: document.getElementById('res-json'),
+        heightProgress: document.getElementById('height-progress'),
+        heightProgressFill: document.getElementById('height-progress-fill'),
+        heightProgressPercent: document.getElementById('height-progress-percent'),
+        heightProgressMin: document.getElementById('height-progress-min'),
+        heightProgressMax: document.getElementById('height-progress-max'),
         statusEl: document.getElementById('status'),
         copyBtn: document.getElementById('copy-btn'),
         imageBtn: document.getElementById('image-btn'),
@@ -107,6 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
         historyContainer: document.getElementById('history'),
         historyList: document.getElementById('history-list'),
         clearHistoryBtn: document.getElementById('clear-history-btn'),
+        exportHistoryBtn: document.getElementById('export-history-btn'),
         docHtml: document.documentElement,
         bgSelector: document.getElementById('bg-selector'),
         gradientSelector: document.getElementById('gradient-selector'),
@@ -136,25 +142,126 @@ document.addEventListener('DOMContentLoaded', () => {
     function loadHistory() {
         const savedHistory = localStorage.getItem('skyHeightHistory');
         history = savedHistory ? JSON.parse(savedHistory) : [];
+
+        // 還原曾以「數值越大越高」儲存的紀錄，避免方向顛倒
+        let needsRepair = false;
+        history.forEach(item => {
+            if (item.heightOrder === 'larger-is-taller') {
+                const tallest = item.tallest;
+                item.tallest = item.shortest;
+                item.shortest = tallest;
+                delete item.heightOrder;
+                needsRepair = true;
+            }
+        });
+        if (needsRepair) saveHistory();
+
         if (history.length > 0) {
             dom.historyContainer.style.display = 'block';
             renderHistory();
         }
     }
 
+    function getHeightPercent(result) {
+        if (!result || typeof result.current !== 'number' ||
+            typeof result.tallest !== 'number' || typeof result.shortest !== 'number') {
+            return null;
+        }
+        const span = result.tallest - result.shortest;
+        if (!isFinite(span) || span === 0) return null;
+        return Math.max(0, Math.min(100, ((result.current - result.shortest) / span) * 100));
+    }
+
+    function stripColon(text) {
+        return text.replace(/\s*[:：]\s*$/, '');
+    }
+
+    function escapeHtml(text) {
+        return String(text).replace(/[&<>"']/g, (ch) => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+        }[ch]));
+    }
+
+    function updateHeightProgress(result) {
+        const percent = getHeightPercent(result);
+        if (percent === null) {
+            dom.heightProgress.style.display = 'none';
+            dom.heightProgress.setAttribute('aria-valuenow', '0');
+            dom.heightProgressFill.style.width = '0%';
+            dom.heightProgressPercent.textContent = '--';
+            dom.heightProgressMin.textContent = '-';
+            dom.heightProgressMax.textContent = '-';
+            return;
+        }
+        dom.heightProgress.style.display = 'block';
+        dom.heightProgress.setAttribute('aria-valuenow', percent.toFixed(0));
+        dom.heightProgressFill.style.width = `${percent.toFixed(1)}%`;
+        if (percent > 50) {
+            const remaining = (100 - percent).toFixed(2);
+            dom.heightProgressPercent.textContent = t('height_progress_remaining').replace('{value}', remaining);
+        } else {
+            dom.heightProgressPercent.textContent = t('height_progress_to_shortest').replace('{value}', percent.toFixed(2));
+        }
+        dom.heightProgressMin.textContent = `${stripColon(t('res_shortest'))} ${result.shortest.toFixed(2)}`;
+        dom.heightProgressMax.textContent = `${stripColon(t('res_tallest'))} ${result.tallest.toFixed(2)}`;
+    }
+
+    function exportHistory() {
+        if (!history.length) return;
+
+        const headers = [
+            t('history_date_label'),
+            stripColon(t('res_current')),
+            stripColon(t('res_tallest')),
+            stripColon(t('res_shortest')),
+            t('history_note_label')
+        ];
+        const rows = history.map(item => [
+            new Date(item.timestamp).toLocaleString(),
+            typeof item.current === 'number' ? item.current.toFixed(4) : '',
+            typeof item.tallest === 'number' ? item.tallest.toFixed(4) : '',
+            typeof item.shortest === 'number' ? item.shortest.toFixed(4) : '',
+            item.note || ''
+        ]);
+        const csv = [headers, ...rows]
+            .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+            .join('\r\n');
+        const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const now = new Date();
+        const pad = (num) => num.toString().padStart(2, '0');
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `sky-height-history-${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }
+
     function renderHistory() {
         dom.historyList.innerHTML = '';
         history.forEach((item, index) => {
-            const currentHeightDisplay = item.current ? item.current.toFixed(4) : 'N/A';
+            const currentHeightDisplay = typeof item.current === 'number' ? item.current.toFixed(4) : 'N/A';
             const li = document.createElement('li');
             const date = new Date(item.timestamp).toLocaleString();
+            const percent = getHeightPercent(item);
+            const progressHtml = percent === null ? '' : `
+                <div class="history-progress" title="${percent.toFixed(0)}%">
+                    <div class="history-progress-fill" style="width: ${percent.toFixed(1)}%;"></div>
+                </div>`;
             li.innerHTML = `
                 <button class="delete-history-item" data-index="${index}" title="${t('confirm_delete_item')}">×</button>
                 <div class="history-item-main">
                     <span class="history-value">${t('history_current_label')}: ${currentHeightDisplay}</span>
                     <span class="timestamp">${date}</span>
                 </div>
-                <button class="history-note" data-index="${index}">${item.note || t('history_note_placeholder')}</button>
+                ${progressHtml}
+                <button class="history-note" data-index="${index}">${escapeHtml(item.note) || t('history_note_placeholder')}</button>
             `;
             dom.historyList.appendChild(li);
         });
@@ -271,19 +378,68 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    dom.historyList.addEventListener('click', (e) => {
-        if (e.target && e.target.classList.contains('history-note')) {
-            const index = e.target.dataset.index;
-            const currentNote = history[index].note || "";
-            const newNote = prompt(t('history_note_placeholder'), currentNote);
-            if (newNote !== null) {
-                history[index].note = newNote.trim();
-                saveHistory();
+    function startNoteEdit(button) {
+        const index = parseInt(button.dataset.index, 10);
+        const li = button.closest('li');
+        if (!li || li.querySelector('.history-note-editor')) return;
+
+        button.style.display = 'none';
+        const editor = document.createElement('div');
+        editor.className = 'history-note-editor';
+        editor.innerHTML = `
+            <input type="text" class="history-note-input" maxlength="100"
+                placeholder="${t('history_note_placeholder')}" value="${escapeHtml(history[index].note || '')}">
+            <div class="history-note-actions">
+                <button type="button" class="history-note-save" data-index="${index}">${t('history_note_save')}</button>
+                <button type="button" class="history-note-cancel">${t('history_note_cancel')}</button>
+            </div>
+        `;
+        button.insertAdjacentElement('afterend', editor);
+
+        const input = editor.querySelector('.history-note-input');
+        input.focus();
+        input.setSelectionRange(input.value.length, input.value.length);
+        input.addEventListener('keydown', (ev) => {
+            if (ev.key === 'Enter') {
+                ev.preventDefault();
+                saveNote(index, editor);
+            } else if (ev.key === 'Escape') {
+                ev.preventDefault();
                 renderHistory();
             }
+        });
+    }
+
+    function saveNote(index, editor) {
+        if (!editor) return;
+        const input = editor.querySelector('.history-note-input');
+        if (!input) return;
+        history[index].note = input.value.trim();
+        saveHistory();
+        renderHistory();
+    }
+
+    dom.historyList.addEventListener('click', (e) => {
+        const noteBtn = e.target.closest('.history-note');
+        if (noteBtn) {
+            startNoteEdit(noteBtn);
+            return;
         }
-        if (e.target && e.target.classList.contains('delete-history-item')) {
-            const index = parseInt(e.target.dataset.index, 10);
+
+        const saveBtn = e.target.closest('.history-note-save');
+        if (saveBtn) {
+            saveNote(parseInt(saveBtn.dataset.index, 10), saveBtn.closest('.history-note-editor'));
+            return;
+        }
+
+        if (e.target.closest('.history-note-cancel')) {
+            renderHistory();
+            return;
+        }
+
+        const deleteBtn = e.target.closest('.delete-history-item');
+        if (deleteBtn) {
+            const index = parseInt(deleteBtn.dataset.index, 10);
             if (confirm(t('confirm_delete_item'))) {
                 history.splice(index, 1);
                 saveHistory();
@@ -304,6 +460,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    if (dom.exportHistoryBtn) {
+        dom.exportHistoryBtn.addEventListener('click', exportHistory);
+    }
+
     dom.themeSwitcher.addEventListener('click', () => {
         applyTheme(dom.docHtml.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
         updatePreview();
@@ -314,6 +474,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (langToggle) {
             setLanguage(langToggle.dataset.lang);
             renderHistory();
+            updateHeightProgress(lastResult);
             updatePreview();
         }
     });
@@ -329,6 +490,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (langToggle) {
             setLanguage(langToggle.dataset.lang);
             renderHistory();
+            updateHeightProgress(lastResult);
             updatePreview();
             dom.langMenuHeader.style.display = 'none';
         }
@@ -387,6 +549,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (dom.resJson) dom.resJson.textContent = '';
         dom.resultActions.style.display = 'none';
         lastResult = null;
+        updateHeightProgress(null);
         dom.statusEl.innerHTML = t('status_calculating'); 
         dom.statusEl.className = '';
         
@@ -403,11 +566,14 @@ document.addEventListener('DOMContentLoaded', () => {
             dom.statusEl.innerHTML = t(results.error); 
             dom.statusEl.className = 'status-error';
             dom.simulatorContainer.style.display = 'none';
+            updateHeightProgress(null);
         } else {
             lastResult = results;
             animateValue(dom.resCurrent, parseFloat(dom.resCurrent.textContent) || 0, results.current, 500);
             animateValue(dom.resTallest, parseFloat(dom.resTallest.textContent) || 0, results.tallest, 500);
             animateValue(dom.resShortest, parseFloat(dom.resShortest.textContent) || 0, results.shortest, 500);
+
+            requestAnimationFrame(() => updateHeightProgress(results));
 
             if (dom.resJson && results.json) {
                 if (typeof versionData !== 'undefined' && versionData.length > 0) {

@@ -33,3 +33,19 @@ All calculations are done in your browser. No data is uploaded, so you can use i
 
     **Method 2: Paste URL**
     * Use a scanner to read the screenshot. Copy the URL starting with `https://sky.thatg.co/o=` and paste it into the tool's input box.
+
+---
+
+## 🐳 開發協助 / Development Assistance
+
+<a href="https://www.deepseek.com" target="_blank">
+    <img src="https://img.shields.io/badge/Assisted%20by-DeepSeek%20%F0%9F%90%B3-1E6FFF?style=for-the-badge" alt="Assisted by DeepSeek">
+</a>
+
+本專案的介面調整、簡體中文支援、身高進度條與歷史記錄功能，由 **DeepSeek（藍色大肥魚 🐳）** 協助完成。
+
+Interface refinements, Simplified Chinese support, the height progress bar and history features were built with the help of **DeepSeek (the blue whale 🐳)**.
+
+本分支由 **EzualG** 維護 · [個人主頁](https://ezualg.cc.cd)
+
+Maintained by **EzualG** · [Homepage](https://ezualg.cc.cd)
