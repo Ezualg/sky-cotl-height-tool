@@ -10,6 +10,7 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: center;
+    justify-content: safe center;
     align-items: center;
     min-height: 100vh;
     box-sizing: border-box;
@@ -244,6 +245,14 @@ textarea:focus, input[type="text"]:focus {
     pointer-events: none;
 }
 
+.upload-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
 button {
     width: 100%;
     padding: 14px;
@@ -278,7 +287,8 @@ button.secondary-btn:hover, button.secondary-btn:active {
     color: var(--primary-text);
 }
 
-#qr-upload-btn {
+#qr-upload-btn,
+#paste-image-btn {
     width: auto;
     padding: 10px 24px;
     font-size: 0.95em;

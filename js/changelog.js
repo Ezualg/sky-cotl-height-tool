@@ -9,7 +9,10 @@ const versionData = [
                 "詳細資訊改為預設折疊",
                 "詳細資訊與歷史紀錄位置對調",
                 "修正歷史備註無法編輯的問題（改為行內輸入）",
-                "頁腳新增 EzualG 個人主頁連結"
+                "頁腳新增 EzualG 個人主頁連結",
+                "新增手機端響應式排版與觸控優化",
+                "新增剪貼簿圖片貼上支援（貼上圖片按鈕／Ctrl+V）",
+                "修正語系判斷：自動偵測簡繁並記住手動選擇"
             ],
             "zh-Hans": [
                 "身高进度条改以「最高」为终点，越接近最高填充越多",
@@ -17,7 +20,10 @@ const versionData = [
                 "详细信息改为默认折叠",
                 "详细信息与历史记录位置对调",
                 "修正历史备注无法编辑的问题（改为行内输入）",
-                "页脚新增 EzualG 个人主页链接"
+                "页脚新增 EzualG 个人主页链接",
+                "新增手机端响应式排版与触控优化",
+                "新增剪贴板图片粘贴支持（粘贴图片按钮／Ctrl+V）",
+                "修正语言判断：自动识别简繁并记住手动选择"
             ],
             "en": [
                 "Height progress bar now fills toward the tallest height",
@@ -25,7 +31,10 @@ const versionData = [
                 "Details section is now collapsed by default",
                 "Swapped the positions of Details and History",
                 "Fixed note editing in history (now uses an inline input)",
-                "Added an EzualG homepage link in the footer"
+                "Added an EzualG homepage link in the footer",
+                "Added responsive mobile layout and touch optimizations",
+                "Added clipboard image paste support (Paste Image button / Ctrl+V)",
+                "Fixed language detection: auto-detect Simplified/Traditional and remember manual choice"
             ],
             "ja": [
                 "身長プログレスバーが「最高」に向かって伸びるようになりました",
@@ -33,7 +42,10 @@ const versionData = [
                 "詳細情報はデフォルトで折りたたまれるようになりました",
                 "詳細情報と履歴の位置を入れ替え",
                 "履歴メモを編集できない問題を修正（インライン入力に変更）",
-                "フッターに EzualG ホームページリンクを追加"
+                "フッターに EzualG ホームページリンクを追加",
+                "モバイル向けレスポンシブ表示とタッチ操作を最適化",
+                "クリップボードの画像貼り付けに対応（ボタン／Ctrl+V）",
+                "言語判定を修正：簡体字／繁体字を自動判定し、手動選択を記憶"
             ]
         }
     },

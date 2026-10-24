@@ -3,9 +3,9 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>光遇身高查看工具</title>
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/style.css?v=2.3.2">
 </head>
 
 <body>
@@ -66,7 +66,10 @@
 
         <div id="qr-upload-area" class="qr-upload-area">
             <p data-lang-key="upload_instruction">...</p>
-            <button id="qr-upload-btn" class="secondary-btn" data-lang-key="upload_btn">...</button>
+            <div class="upload-actions">
+                <button id="qr-upload-btn" class="secondary-btn" data-lang-key="upload_btn">...</button>
+                <button id="paste-image-btn" class="secondary-btn" data-lang-key="paste_image_btn">...</button>
+            </div>
             <input type="file" id="qr-file-input" accept="image/*" style="display: none;">
         </div>
         
@@ -228,10 +231,10 @@
 
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
     
-    <script src="js/translations.js"></script>
-    <script src="js/calculator.js"></script>
-    <script src="js/changelog.js"></script>
-    <script src="js/script.js"></script>
+    <script src="js/translations.js?v=2.3.2"></script>
+    <script src="js/calculator.js?v=2.3.2"></script>
+    <script src="js/changelog.js?v=2.3.2"></script>
+    <script src="js/script.js?v=2.3.2"></script>
 </body>
 
 </html>

@@ -1,4 +1,43 @@
-let currentLang = 'zh-Hant';
+const LANG_STORAGE_KEY = 'skyHeightLang';
+
+function matchLanguageTag(rawTag) {
+    const tag = String(rawTag || '').toLowerCase().replace(/_/g, '-');
+    if (!tag) return null;
+
+    // 繁體：zh-Hant、台灣、香港、澳門
+    if (tag === 'zh-hant' || tag.startsWith('zh-hant-') ||
+        tag.startsWith('zh-tw') || tag.startsWith('zh-hk') || tag.startsWith('zh-mo')) {
+        return 'zh-Hant';
+    }
+    // 其餘中文（zh、zh-CN、zh-SG、zh-Hans…）皆視為简体
+    if (tag.startsWith('zh')) return 'zh-Hans';
+    if (tag === 'ja' || tag.startsWith('ja-')) return 'ja';
+    if (tag === 'en' || tag.startsWith('en-')) return 'en';
+    return null;
+}
+
+function detectLanguage() {
+    try {
+        const saved = localStorage.getItem(LANG_STORAGE_KEY);
+        if (saved && translations[saved]) return saved;
+    } catch (e) {
+        // localStorage 不可用時忽略
+    }
+
+    const candidates = [];
+    if (Array.isArray(navigator.languages)) candidates.push(...navigator.languages);
+    if (navigator.language) candidates.push(navigator.language);
+
+    for (const candidate of candidates) {
+        const matched = matchLanguageTag(candidate);
+        if (matched) return matched;
+    }
+
+    return 'zh-Hant';
+}
+
+let currentLang = detectLanguage();
+document.documentElement.lang = currentLang;
 let history = [];
 let uploadedImageUrl = null;
 let lastResult = null;
@@ -45,8 +84,16 @@ function renderChangelog() {
     }).join('');
 }
 
-function setLanguage(lang) {
+function setLanguage(lang, options = {}) {
+    if (!translations[lang]) return;
     currentLang = lang;
+    if (options.persist !== false) {
+        try {
+            localStorage.setItem(LANG_STORAGE_KEY, lang);
+        } catch (e) {
+            // 忽略儲存失敗
+        }
+    }
     document.documentElement.lang = lang;
     document.querySelectorAll('[data-lang-key]').forEach(el => {
         const key = el.getAttribute('data-lang-key');
@@ -132,7 +179,8 @@ document.addEventListener('DOMContentLoaded', () => {
         potionExtremeNotice: document.getElementById('potion-extreme-notice'),
         qrUploadArea: document.getElementById('qr-upload-area'),
         qrFileInput: document.getElementById('qr-file-input'),
-        qrCanvas: document.getElementById('qr-canvas')
+        qrCanvas: document.getElementById('qr-canvas'),
+        pasteImageBtn: document.getElementById('paste-image-btn')
     };
 
     function saveHistory() {
@@ -598,7 +646,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    dom.b64Input.addEventListener('paste', () => {
+    dom.b64Input.addEventListener('paste', (e) => {
+        const data = e.clipboardData;
+        const hasImage = data && Array.from(data.types || []).some(type => type.startsWith('image/'));
+        if (hasImage) return;
         setTimeout(() => { dom.calculateBtn.click(); }, 0);
     });
 
@@ -805,6 +856,48 @@ document.addEventListener('DOMContentLoaded', () => {
 
     dom.qrUploadArea.addEventListener('click', () => dom.qrFileInput.click());
 
+    async function pasteImageFromClipboard() {
+        if (!navigator.clipboard || typeof navigator.clipboard.read !== 'function') {
+            dom.statusEl.innerHTML = t('status_clipboard_unsupported');
+            dom.statusEl.className = 'status-error';
+            return;
+        }
+
+        try {
+            dom.statusEl.innerHTML = t('status_qr_reading');
+            dom.statusEl.className = '';
+            const clipboardItems = await Promise.race([
+                navigator.clipboard.read(),
+                new Promise((_, reject) => {
+                    setTimeout(() => reject(new Error('clipboard-read-timeout')), 15000);
+                })
+            ]);
+
+            for (const item of clipboardItems) {
+                const imageType = (item.types || []).find(type => type.startsWith('image/'));
+                if (imageType) {
+                    const blob = await item.getType(imageType);
+                    const file = new File([blob], 'clipboard-image', { type: imageType });
+                    await handleQrUpload(file);
+                    return;
+                }
+            }
+
+            dom.statusEl.innerHTML = t('status_clipboard_empty');
+            dom.statusEl.className = 'status-error';
+        } catch (err) {
+            dom.statusEl.innerHTML = t('status_clipboard_error');
+            dom.statusEl.className = 'status-error';
+        }
+    }
+
+    if (dom.pasteImageBtn) {
+        dom.pasteImageBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            pasteImageFromClipboard();
+        });
+    }
+
     dom.qrFileInput.addEventListener('change', (e) => {
         if (e.target.files && e.target.files.length > 0) {
             handleQrUpload(e.target.files[0]);
@@ -834,18 +927,23 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document.addEventListener('paste', (e) => {
-        if (e.clipboardData && e.clipboardData.items) {
-            const items = e.clipboardData.items;
-            for (let i = 0; i < items.length; i++) {
-                if (items[i].type.indexOf('image') !== -1) {
-                    e.preventDefault(); 
-                    const file = items[i].getAsFile();
-                    if (file) {
-                        handleQrUpload(file);
-                    }
-                    break;
-                }
-            }
+        const data = e.clipboardData;
+        if (!data) return;
+
+        let file = null;
+        if (data.items) {
+            const imageItem = Array.from(data.items).find(item =>
+                item.kind === 'file' && item.type && item.type.startsWith('image/')
+            );
+            if (imageItem) file = imageItem.getAsFile();
+        }
+        if (!file && data.files && data.files.length) {
+            file = Array.from(data.files).find(f => f.type && f.type.startsWith('image/')) || null;
+        }
+
+        if (file) {
+            e.preventDefault();
+            handleQrUpload(file);
         }
     });
 
@@ -855,7 +953,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     populateBgSelectors();
     loadHistory();
-    setLanguage(currentLang);
+    setLanguage(currentLang, { persist: false });
     renderChangelog();
     updatePreview();
 });
