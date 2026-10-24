@@ -6,7 +6,7 @@ A height checker tool made for players of *Sky: Children of the Light*.
 所有计算都在你的浏览器上进行，不会上传任何资料，可以安心使用。
 All calculations are done in your browser. No data is uploaded, so you can use it with peace of mind.
 
-[**➡️ 点此前往网页 (Click here to visit the web tool)**](https://sky.ezualg.cc.cd/)
+[**➡️ 点此前往网页 (Click here to visit the web tool)**](https://sky.ezulag.cc.cd/)
 
 ---
 ## 该版本的修改
